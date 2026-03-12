@@ -2,28 +2,43 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
+	"sync/atomic"
 )
 
+type apiconfig struct {
+	fileServerHits atomic.Int32
+}
+
 func main() {
-	filepathRoot := "."
-	serverPort := ":8080"
+	const filepathRoot = "."
+	const serverPort = ":8080"
+
+	config := apiconfig{
+		fileServerHits: atomic.Int32{},
+	}
 
 	servMux := http.NewServeMux()
-	servMux.Handle("/", http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot))))
-	servMux.HandleFunc("/healthz", handlerHealthz)
+	fileSrv := config.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot))))
+	servMux.Handle("/app/", fileSrv)
+
+	servMux.HandleFunc("GET /api/healthz", handlerHealthz)
+	servMux.HandleFunc("GET /api/metrics", config.handlerMetrics)
+	servMux.HandleFunc("POST /api/reset", config.handlerReset)
+
 	srv := http.Server{
 		Handler: servMux,
 		Addr:    serverPort,
 	}
+
 	fmt.Printf("Start server on port: %s\nWhich server dir: %s\n", serverPort, filepathRoot)
-	srv.ListenAndServe()
+	log.Fatal(srv.ListenAndServe())
 
 }
 
-func handlerHealthz(res http.ResponseWriter, req *http.Request) {
-	// fmt.Println("test - handler")
-	res.Header().Add("Content-Type", "text/plain; charset=utf-8")
-	res.WriteHeader(http.StatusOK)
-	res.Write([]byte("OK"))
+func (c *apiconfig) handlerReset(w http.ResponseWriter, req *http.Request) {
+	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
+	c.fileServerHits.Store(0)
+	w.WriteHeader(http.StatusOK)
 }
