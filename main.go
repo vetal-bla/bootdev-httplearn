@@ -24,8 +24,9 @@ func main() {
 	servMux.Handle("/app/", fileSrv)
 
 	servMux.HandleFunc("GET /api/healthz", handlerHealthz)
-	servMux.HandleFunc("GET /api/metrics", config.handlerMetrics)
-	servMux.HandleFunc("POST /api/reset", config.handlerReset)
+	servMux.HandleFunc("POST /api/validate_chirp", handlerValidate)
+	servMux.HandleFunc("GET /admin/metrics", config.handlerMetrics)
+	servMux.HandleFunc("POST /admin/reset", config.handlerReset)
 
 	srv := http.Server{
 		Handler: servMux,
