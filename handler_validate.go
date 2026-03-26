@@ -4,15 +4,24 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"slices"
+	"strings"
 )
 
 func handlerValidate(w http.ResponseWriter, req *http.Request) {
+
+	var badWords = []string{
+		"kerfuffle",
+		"sharbert",
+		"fornax",
+	}
+
 	type parameters struct {
 		Body string `json:"body"`
 	}
 
 	type responseBody struct {
-		Valid bool `json:"valid"`
+		CleanedBody string `json:"cleaned_body"`
 	}
 
 	decoder := json.NewDecoder(req.Body)
@@ -32,7 +41,23 @@ func handlerValidate(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	cleanedBody := replaceBadWords(badWords, param.Body)
+
 	respondWithJSON(w, 200, responseBody{
-		Valid: true,
+		CleanedBody: cleanedBody,
 	})
+}
+
+func replaceBadWords(badWords []string, originalString string) string {
+	originalStringAr := strings.Split(originalString, " ")
+	newString := make([]string, len(originalStringAr))
+	for i, word := range originalStringAr {
+		if slices.Contains(badWords, strings.ToLower(word)) {
+			newString[i] = "****"
+		} else {
+			newString[i] = word
+		}
+	}
+
+	return strings.Join(newString, " ")
 }
