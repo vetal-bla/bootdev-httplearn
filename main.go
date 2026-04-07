@@ -22,6 +22,14 @@ type User struct {
 	Email     string    `json:"email"`
 }
 
+type Chirps struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Body      string    `json:"body"`
+	UserID    uuid.UUID `json:"user_id"`
+}
+
 type apiconfig struct {
 	fileServerHits atomic.Int32
 	db             *database.Queries
@@ -59,7 +67,9 @@ func main() {
 
 	servMux.HandleFunc("GET /api/healthz", handlerHealthz)
 	servMux.HandleFunc("POST /api/users", config.handlerCreateUser)
-	servMux.HandleFunc("POST /api/validate_chirp", handlerValidate)
+	servMux.HandleFunc("POST /api/chirps", config.handlerCreateChirps)
+	servMux.HandleFunc("GET /api/chirps", config.handlerGetAllChirps)
+	servMux.HandleFunc("GET /api/chirps/{chirpid}/", config.handlerGetChirp)
 	servMux.HandleFunc("GET /admin/metrics", config.handlerMetrics)
 	servMux.HandleFunc("POST /admin/reset", config.handlerReset)
 
