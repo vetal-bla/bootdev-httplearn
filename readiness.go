@@ -1,6 +1,8 @@
 package main
 
-import "net/http"
+import (
+	"net/http"
+)
 
 func handlerHealthz(res http.ResponseWriter, req *http.Request) {
 	res.Header().Add("Content-Type", "text/plain; charset=utf-8")

@@ -72,6 +72,7 @@ func main() {
 	servMux.HandleFunc("GET /api/chirps/{chirpid}/", config.handlerGetChirp)
 	servMux.HandleFunc("GET /admin/metrics", config.handlerMetrics)
 	servMux.HandleFunc("POST /admin/reset", config.handlerReset)
+	servMux.HandleFunc("POST /api/login", config.handlerLogin)
 
 	srv := http.Server{
 		Handler: servMux,

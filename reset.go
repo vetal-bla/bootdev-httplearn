@@ -8,7 +8,7 @@ import (
 
 func (c *apiconfig) handlerReset(w http.ResponseWriter, req *http.Request) {
 	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
-	fmt.Printf(c.platform)
+	fmt.Printf("Running platform: %s", c.platform)
 
 	if c.platform != "dev" {
 		w.WriteHeader(http.StatusForbidden)

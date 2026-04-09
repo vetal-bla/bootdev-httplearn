@@ -5,10 +5,14 @@ import (
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/vetal-bla/bootdev-httplearn/internal/auth"
+	"github.com/vetal-bla/bootdev-httplearn/internal/database"
 )
 
 func (c *apiconfig) handlerCreateUser(w http.ResponseWriter, req *http.Request) {
 	type parameters struct {
+		Password string `json:"password"`
 		Email string `json:"email"`
 	}
 
@@ -33,7 +37,19 @@ func (c *apiconfig) handlerCreateUser(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	dbUser, err := c.db.CreateUser(req.Context(), param.Email)
+	hashedPass, err := auth.HashPassword(param.Password)
+	if err != nil {
+		log.Printf("Cant create hash: %v", err)
+		respondWithError(w, http.StatusInternalServerError, "sorry")
+		return
+	}
+
+	createUserParams := database.CreateUserParams{
+		Email:  param.Email,
+		HashedPassword:  hashedPass,
+	}
+
+	dbUser, err := c.db.CreateUser(req.Context(), createUserParams)
 	if err != nil {
 		log.Printf("Error in database query: %v", err)
 		respondWithError(w, http.StatusInternalServerError, "db query error")
