@@ -20,6 +20,8 @@ type User struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	Email     string    `json:"email"`
+	Token     string    `json:"token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 type Chirps struct {
@@ -34,6 +36,7 @@ type apiconfig struct {
 	fileServerHits atomic.Int32
 	db             *database.Queries
 	platform       string
+	secret         string
 }
 
 func main() {
@@ -43,8 +46,13 @@ func main() {
 	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
 	platform := os.Getenv("PLATFORM")
+	secret := os.Getenv("SECRET")
 	if dbURL == "" {
 		log.Fatal("DB_URL must be set")
+	}
+
+	if secret == "" {
+		log.Fatal("SECRET variable must be set")
 	}
 
 	db, err := sql.Open("postgres", dbURL)
@@ -73,6 +81,8 @@ func main() {
 	servMux.HandleFunc("GET /admin/metrics", config.handlerMetrics)
 	servMux.HandleFunc("POST /admin/reset", config.handlerReset)
 	servMux.HandleFunc("POST /api/login", config.handlerLogin)
+	servMux.HandleFunc("POST /api/refresh", config.handlerRefresh)
+	servMux.HandleFunc("POST /api/revoke", config.handlerRevoke)
 
 	srv := http.Server{
 		Handler: servMux,

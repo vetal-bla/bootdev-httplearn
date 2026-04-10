@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/vetal-bla/bootdev-httplearn/internal/auth"
 	"github.com/vetal-bla/bootdev-httplearn/internal/database"
 )
 
@@ -22,12 +23,24 @@ func (c *apiconfig) handlerCreateChirps(w http.ResponseWriter, req *http.Request
 
 	type parameters struct {
 		Body   string    `json:"body"`
-		UserID uuid.UUID `json:"user_id"`
+	}
+
+	token, err := auth.GetBearerToken(req.Header)
+	if err !=nil {
+		respondWithError(w, http.StatusInternalServerError, "token error")
+		log.Printf("Get token erro: %v", err)
+		return
+	}
+
+	userID, err := auth.ValidateJWT(token, c.secret)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Unauthorized")
+		log.Printf("JWT validation error: %v\n", err)
 	}
 
 	decoder := json.NewDecoder(req.Body)
 	param := parameters{}
-	err := decoder.Decode(&param)
+	err = decoder.Decode(&param)
 	if err != nil {
 		log.Printf("Error decoding parameters: %s", err)
 		respondWithError(w, http.StatusInternalServerError, "couldn't get parameters")
@@ -42,11 +55,12 @@ func (c *apiconfig) handlerCreateChirps(w http.ResponseWriter, req *http.Request
 		return
 	}
 
+
 	cleanedBody := replaceBadWords(badWords, param.Body)
 
 	dbParams := database.CreateChirpsParams{
 		Body:   cleanedBody,
-		UserID: param.UserID,
+		UserID: userID,
 	}
 
 	dbChirps, err := c.db.CreateChirps(req.Context(), dbParams)
