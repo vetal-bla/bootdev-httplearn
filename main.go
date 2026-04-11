@@ -73,16 +73,17 @@ func main() {
 	fileSrv := config.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot))))
 	servMux.Handle("/app/", fileSrv)
 
-	servMux.HandleFunc("GET /api/healthz", handlerHealthz)
-	servMux.HandleFunc("POST /api/users", config.handlerCreateUser)
-	servMux.HandleFunc("POST /api/chirps", config.handlerCreateChirps)
+	servMux.HandleFunc("GET /admin/metrics", config.handlerMetrics)
 	servMux.HandleFunc("GET /api/chirps", config.handlerGetAllChirps)
 	servMux.HandleFunc("GET /api/chirps/{chirpid}/", config.handlerGetChirp)
-	servMux.HandleFunc("GET /admin/metrics", config.handlerMetrics)
+	servMux.HandleFunc("GET /api/healthz", handlerHealthz)
 	servMux.HandleFunc("POST /admin/reset", config.handlerReset)
+	servMux.HandleFunc("POST /api/chirps", config.handlerCreateChirps)
 	servMux.HandleFunc("POST /api/login", config.handlerLogin)
 	servMux.HandleFunc("POST /api/refresh", config.handlerRefresh)
 	servMux.HandleFunc("POST /api/revoke", config.handlerRevoke)
+	servMux.HandleFunc("POST /api/users", config.handlerCreateUser)
+	servMux.HandleFunc("PUT /api/users", config.handlerUpdateUser)
 
 	srv := http.Server{
 		Handler: servMux,
