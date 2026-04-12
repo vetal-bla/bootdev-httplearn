@@ -22,11 +22,11 @@ func (c *apiconfig) handlerCreateChirps(w http.ResponseWriter, req *http.Request
 	}
 
 	type parameters struct {
-		Body   string    `json:"body"`
+		Body string `json:"body"`
 	}
 
 	token, err := auth.GetBearerToken(req.Header)
-	if err !=nil {
+	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "token error")
 		log.Printf("Get token erro: %v", err)
 		return
@@ -54,7 +54,6 @@ func (c *apiconfig) handlerCreateChirps(w http.ResponseWriter, req *http.Request
 		respondWithError(w, 400, "Chirp is too long")
 		return
 	}
-
 
 	cleanedBody := replaceBadWords(badWords, param.Body)
 
@@ -139,4 +138,53 @@ func replaceBadWords(badWords []string, originalString string) string {
 	}
 
 	return strings.Join(newString, " ")
+}
+
+func (c *apiconfig) handlerDeleteChirp(w http.ResponseWriter, req *http.Request) {
+	chirpID := req.PathValue("chirpid")
+	chirpUUID, err := uuid.Parse(chirpID)
+	if err != nil {
+		log.Printf("Cant convert string to uuid: %v", err)
+		respondWithError(w, http.StatusNotAcceptable, "Uncorrect uuid format")
+		return
+	}
+
+	token, err := auth.GetBearerToken(req.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "not allowed")
+		return
+	}
+
+	userID, err := auth.ValidateJWT(token, c.secret)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	chirp, err := c.db.GetChirp(req.Context(), chirpUUID)
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "not found")
+		return
+	}
+
+	if chirp.UserID != userID {
+		respondWithError(w, http.StatusForbidden, "not yours!")
+		return
+	}
+
+	deleteUserChirpParams := database.DeleteUserChirpParams{
+		ID:     chirpUUID,
+		UserID: userID,
+	}
+
+	err = c.db.DeleteUserChirp(req.Context(), deleteUserChirpParams)
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "user's chirps not founc")
+		return
+	}
+
+	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
+	w.WriteHeader(http.StatusNoContent)
+	w.Write([]byte("OK"))
+
 }

@@ -84,6 +84,7 @@ func main() {
 	servMux.HandleFunc("POST /api/revoke", config.handlerRevoke)
 	servMux.HandleFunc("POST /api/users", config.handlerCreateUser)
 	servMux.HandleFunc("PUT /api/users", config.handlerUpdateUser)
+	servMux.HandleFunc("DELETE /api/chirps/{chirpid}", config.handlerDeleteChirp)
 
 	srv := http.Server{
 		Handler: servMux,
