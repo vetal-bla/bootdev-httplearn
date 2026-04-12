@@ -13,7 +13,7 @@ import (
 func (c *apiconfig) handlerCreateUser(w http.ResponseWriter, req *http.Request) {
 	type parameters struct {
 		Password string `json:"password"`
-		Email string `json:"email"`
+		Email    string `json:"email"`
 	}
 
 	decoder := json.NewDecoder(req.Body)
@@ -45,8 +45,8 @@ func (c *apiconfig) handlerCreateUser(w http.ResponseWriter, req *http.Request) 
 	}
 
 	createUserParams := database.CreateUserParams{
-		Email:  param.Email,
-		HashedPassword:  hashedPass,
+		Email:          param.Email,
+		HashedPassword: hashedPass,
 	}
 
 	dbUser, err := c.db.CreateUser(req.Context(), createUserParams)
@@ -57,10 +57,10 @@ func (c *apiconfig) handlerCreateUser(w http.ResponseWriter, req *http.Request) 
 	}
 
 	myDbuser := User{
-		ID: dbUser.ID,
-		CreatedAt:  dbUser.CreatedAt,
-		UpdatedAt:  dbUser.UpdatedAt,
-		Email:  dbUser.Email,
+		ID:        dbUser.ID,
+		CreatedAt: dbUser.CreatedAt,
+		UpdatedAt: dbUser.UpdatedAt,
+		Email:     dbUser.Email,
 	}
 
 	respondWithJSON(w, http.StatusCreated, myDbuser)
@@ -78,7 +78,7 @@ func (c *apiconfig) handlerUpdateUser(w http.ResponseWriter, req *http.Request) 
 
 	type parameters struct {
 		NewPassword string `json:"password"`
-		NewEmail string `json:"email"`
+		NewEmail    string `json:"email"`
 	}
 
 	userID, err := auth.ValidateJWT(accessToken, c.secret)
@@ -86,7 +86,6 @@ func (c *apiconfig) handlerUpdateUser(w http.ResponseWriter, req *http.Request) 
 		respondWithError(w, http.StatusUnauthorized, "oups!")
 		return
 	}
-
 
 	decoder := json.NewDecoder(req.Body)
 	param := parameters{}
@@ -116,9 +115,9 @@ func (c *apiconfig) handlerUpdateUser(w http.ResponseWriter, req *http.Request) 
 	}
 
 	updateParams := database.UpdateEmailAndPawwordParams{
-		ID:  userID,
-		Email:  param.NewEmail,
-		HashedPassword:  hashedPassword,
+		ID:             userID,
+		Email:          param.NewEmail,
+		HashedPassword: hashedPassword,
 	}
 
 	updatedUser, err := c.db.UpdateEmailAndPawword(req.Context(), updateParams)
@@ -128,10 +127,11 @@ func (c *apiconfig) handlerUpdateUser(w http.ResponseWriter, req *http.Request) 
 	}
 
 	user := User{
-		ID:  updatedUser.ID,
-		Email:  updatedUser.Email,
-		CreatedAt:  updatedUser.CreatedAt,
-		UpdatedAt:  updatedUser.UpdatedAt,
+		ID:          updatedUser.ID,
+		Email:       updatedUser.Email,
+		CreatedAt:   updatedUser.CreatedAt,
+		UpdatedAt:   updatedUser.UpdatedAt,
+		IsChirpyRed: updatedUser.IsChirpyRed.Bool,
 	}
 
 	respondWithJSON(w, http.StatusOK, user)

@@ -74,6 +74,7 @@ func (c *apiconfig) handlerLogin(w http.ResponseWriter, req *http.Request) {
 		Email:        dbUser.Email,
 		Token:        jwtToken,
 		RefreshToken: dbRefreshToken.Token,
+		IsChirpyRed:  dbUser.IsChirpyRed.Bool,
 	}
 
 	log.Printf("Hash matched. OK! Token created for user: %s", jsonUser.ID)
