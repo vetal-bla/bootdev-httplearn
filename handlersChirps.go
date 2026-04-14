@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"slices"
+	"sort"
 	"strings"
 
 	"github.com/google/uuid"
@@ -78,10 +79,29 @@ func (c *apiconfig) handlerCreateChirps(w http.ResponseWriter, req *http.Request
 }
 
 func (c *apiconfig) handlerGetAllChirps(w http.ResponseWriter, req *http.Request) {
-	dbChirps, err := c.db.GetAllChirps(req.Context())
-	if err != nil {
-		log.Printf("Error retrieve data from database: %v", err)
-		return
+	var err error
+	dbChirps := []database.Chirp{}
+	authorID := req.URL.Query().Get("author_id")
+	if authorID != "" {
+		log.Printf("uthori: %v", authorID)
+		authorIDUUID, err := uuid.Parse(authorID)
+		if err != nil {
+			log.Printf("Cant parse uuid: %v", err)
+			respondWithError(w, http.StatusNotFound, "")
+			return
+		}
+		dbChirps, err = c.db.GetAllChirpsByUserID(req.Context(), authorIDUUID)
+		if err != nil {
+			log.Printf("cant get chirps from db: %v", err)
+			respondWithError(w, http.StatusNotFound, "")
+			return
+		}
+	} else {
+		dbChirps, err = c.db.GetAllChirps(req.Context())
+		if err != nil {
+			log.Printf("Error retrieve data from database: %v", err)
+			return
+		}
 	}
 
 	arrChirps := []Chirps{}
@@ -95,7 +115,19 @@ func (c *apiconfig) handlerGetAllChirps(w http.ResponseWriter, req *http.Request
 		})
 	}
 
+	if req.URL.Query().Get("sort") == "asc" {
+		sort.Slice(arrChirps, func(i, j int) bool { return arrChirps[i].CreatedAt.Before(arrChirps[j].CreatedAt) })
+		respondWithJSON(w, http.StatusOK, arrChirps)
+		return
+	}
+	if req.URL.Query().Get("sort") == "desc" {
+		sort.Slice(arrChirps, func(i, j int) bool { return arrChirps[i].CreatedAt.After(arrChirps[j].CreatedAt) })
+		respondWithJSON(w, http.StatusOK, arrChirps)
+		return
+	}
+
 	respondWithJSON(w, http.StatusOK, arrChirps)
+
 }
 
 func (c *apiconfig) handlerGetChirp(w http.ResponseWriter, req *http.Request) {

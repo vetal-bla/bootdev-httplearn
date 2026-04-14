@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/vetal-bla/bootdev-httplearn/internal/auth"
 )
 
 func (c *apiconfig) handlerWebhook(w http.ResponseWriter, req *http.Request) {
@@ -16,9 +17,20 @@ func (c *apiconfig) handlerWebhook(w http.ResponseWriter, req *http.Request) {
 		} `json:"data"`
 	}
 
+	reqPolkaKey, err := auth.GetApiKey(req.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "polka key?")
+		return
+	}
+
+	if reqPolkaKey != c.polkaKey {
+		respondWithError(w, http.StatusUnauthorized, "polka key?")
+		return
+	}
+
 	decoder := json.NewDecoder(req.Body)
 	param := parameters{}
-	err := decoder.Decode(&param)
+	err = decoder.Decode(&param)
 	if err != nil {
 		log.Printf("Error decoding parameters: %s", err)
 		respondWithError(w, http.StatusInternalServerError, "couldn't get parameters")

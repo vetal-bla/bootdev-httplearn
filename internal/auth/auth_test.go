@@ -192,3 +192,70 @@ func TestGetBearerToken(t *testing.T) {
 	}
 }
 
+
+func TestGetApiKey(t *testing.T) {
+	tests := []struct {
+		name string // description of this test case
+		// Named input parameters for target function.
+		headers http.Header
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "ValidHeader",
+			headers: http.Header{
+				"Authorization": []string{"ApiKey VALID_TOKEN$1"},
+			},
+			want: "VALID_TOKEN$1",
+			wantErr:  false,
+		},
+		{
+			name: "EmptyHeader",
+			headers: http.Header{},
+			want: "",
+			wantErr:  true,
+		},
+		{
+			name: "NoToken",
+			headers: http.Header{
+				"Authorization": []string{"ApiKey   "},
+			},
+			want: "",
+			wantErr:  true,
+		},
+		{
+			name: "AdditionalSpaces",
+			headers: http.Header{
+				"Authorization": []string{"ApiKey     VALID_TOKEN$1"},
+			},
+			want: "VALID_TOKEN$1",
+			wantErr:  false,
+		},
+		{
+			name: "EmptyAthorizationHeader",
+			headers: http.Header{
+				"Authorization": []string{""},
+			},
+			want: "",
+			wantErr:  true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, gotErr := auth.GetApiKey(tt.headers)
+			if gotErr != nil {
+				if !tt.wantErr {
+					t.Errorf("GetApiKey() failed: %v", gotErr)
+				}
+				return
+			}
+			if tt.wantErr {
+				t.Fatal("GetApiKey() succeeded unexpectedly")
+			}
+			if got != tt.want {
+				t.Errorf("GetApiKey() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+

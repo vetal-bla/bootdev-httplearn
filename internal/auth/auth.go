@@ -88,6 +88,24 @@ func GetBearerToken(headers http.Header) (string, error) {
 	return token[1], nil
 }
 
+func GetApiKey(headers http.Header) (string, error) {
+	authHeader := headers.Get("authorization")
+	if authHeader == "" {
+		return "", errors.New("Empty auth header")
+	}
+
+	token := strings.Fields(authHeader)
+	if len(token) < 2 {
+		return "", errors.New("Uncorrect token format")
+	}
+
+	if token[0] != "ApiKey" {
+		return "", errors.New("Uncorrect token format")
+	}
+
+	return token[1], nil
+}
+
 func MakeRefreshToken() string {
 	refreshToken := make([]byte, 32)
 	rand.Read(refreshToken)
